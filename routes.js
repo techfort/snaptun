@@ -1,57 +1,75 @@
 function generateRoutes(db) {
-
-  var $utils = {
-    sendError: function (status, res, message) {
-      res.status(status).json({
-        message: message
-      });
-    },
-    parseParams: function (params, config) {
-      var prop, parsed = {};
-      for (prop in params) {
-        switch (config[prop]) {
-        case 'int':
-          parsed[prop] = parseInt(params[prop], 10);
-          break;
-        case 'float':
-          parsed[prop] = parseFloat(params[prop]);
-          break;
-        case 'bool':
-          parsed[prop] = params[prop] === 'true' ? true : false;
-          break;
-        case 'string':
-          parsed[prop] = '' + params[prop];
-          break;
-        default:
-          // bypass
-          parsed[prop] = params[prop];
+  "use strict";
+  var util = require('util'),
+    $utils = {
+      sendError: function (status, res, message) {
+        res.status(status).json({
+          message: message
+        });
+      },
+      setJSONHeader: function (res) {
+        res.set('Content-Type', 'application/json');
+      },
+      parseParams: function (params, config) {
+        var prop, parsed = {};
+        for (prop in params) {
+          switch (config[prop]) {
+          case 'int':
+            parsed[prop] = parseInt(params[prop], 10);
+            break;
+          case 'float':
+            parsed[prop] = parseFloat(params[prop]);
+            break;
+          case 'bool':
+            parsed[prop] = params[prop] === 'true' ? true : false;
+            break;
+          case 'string':
+            parsed[prop] = '' + params[prop];
+            break;
+          default:
+            // bypass
+            parsed[prop] = params[prop];
+          }
+        }
+        return parsed;
+      },
+      checkParams: function (obj, res, paramsArray) {
+        var passed = true;
+        paramsArray.forEach(function (param) {
+          if (!obj[param]) {
+            $utils.sendError(400, res, 'missing ' + param + ' parameter');
+            passed = false;
+          }
+        });
+        return passed;
+      },
+      checkCollection: function (name, res) {
+        var collection = db.getCollection(name);
+        if (!collection) {
+          $utils.sendError(400, res, 'Collection ' + name + ' not found');
+        }
+        return collection;
+      },
+      mergeDocument: function (src, dst, collection) {
+        var prop;
+        if (src.$loki === dst.$loki) {
+          for (prop in src) {
+            if (prop !== 'meta') {
+              dst[prop] = src[prop];
+            }
+          }
+          collection.update(dst);
         }
       }
-      return parsed;
-    },
-    checkParams: function (obj, res, paramsArray) {
-      var passed = true;
-      paramsArray.forEach(function (param) {
-        if (!obj[param]) {
-          $utils.sendError(400, res, 'missing ' + param + ' parameter');
-          passed = false;
-        }
-      });
-      return passed;
-    },
-    checkCollection: function (name, res) {
-      var collection = db.getCollection(name);
-      if (!collection) {
-        $utils.sendError(400, res, 'Collection ' + name + ' not found');
-      }
-      return collection;
-    }
-  };
+    };
 
   return [{
     method: 'post',
     url: '/addcollection',
     handler: function (req, res) {
+
+      $utils.setJSONHeader(res);
+
       if (!req.body.name) {
         $utils.sendError(400, res, 'missing collection name parameter');
         return;
@@ -70,15 +88,16 @@ function generateRoutes(db) {
         res.json({
           message: 'Collection ' + req.body.name + ' created successfully',
           config: {
-            't': coll.transactional,
-            'a': coll.asyncListeners,
-            'c': coll.cloneObjects
+            'transactional': coll.transactional,
+            'asyncListeners': coll.asyncListeners,
+            'cloneObjects': coll.cloneObjects,
+            'disableChangesApi': coll.disableChangesApi
           }
         });
       }
     }
   }, {
-    method: 'post',
+    method: 'put',
     url: '/insert',
     handler: function (req, res) {
       if (!req.body.doc || !req.body.collection) {
@@ -94,21 +113,42 @@ function generateRoutes(db) {
       return;
     }
   }, {
+    method: 'post',
+    url: '/update',
+    handler: function (req, res) {
+      var coll, doc;
+      if ($utils.checkParams(req.body, res, ['collection', 'doc'])) {
+        if (coll = $utils.checkCollection(req.body.collection, res)) {
+          doc = coll.get(req.body.doc.$loki);
+          if (!doc) {
+            $utils.sendError(400, res, 'Document with $loki id ' + req.body.doc.$loki + ' does not exist');
+            return;
+          }
+          $utils.mergeDocument(req.body.doc, doc, coll);
+          res.json({
+
+          });
+        }
+      }
+    }
+  }, {
     url: '/get/:collection/:id?',
     method: 'get',
     handler: function (req, res) {
       var params = $utils.parseParams(req.params, {
-        collection: 'string',
-        id: 'int'
-      });
-      var coll, collection, id, doc, docs;
+          collection: 'string',
+          id: 'int'
+        }),
+        coll,
+        collection,
+        id;
+
       coll = params.collection;
       if (!$utils.checkCollection(coll)) {
         return;
       }
+
       collection = db.getCollection(coll);
-
-
 
       if (req.params.id) {
         id = parseInt(params.id, 10);
@@ -118,13 +158,42 @@ function generateRoutes(db) {
       }
     }
   }, {
+    url: '/delete/:collection/:id',
+    method: 'delete',
+    handler: function (req, res) {
+      var coll, params, doc;
+      if (coll = $utils.checkCollection(req.params.collection, res)) {
+        params = $utils.parseParams(req.params, {
+          id: 'int'
+        });
+        doc = coll.get(params.id);
+        coll.remove(doc);
+        res.json({
+          message: 'Document with $loki id ' + req.params.id + ' deleted'
+        });
+      }
+    }
+  }, {
+    url: '/deleteview/:collection/:viewname',
+    method: 'delete',
+    handler: function (req, res) {
+      var coll;
+      if (coll = $utils.checkCollection(req.params.collection, res)) {
+        coll.removeDynamicView(req.params.viewname);
+        res.json({
+          message: 'View ' + req.params.viewname + ' deleted from ' + req.params.collection
+        });
+      }
+    }
+  }, {
     url: '/addview',
     method: 'post',
     handler: function (req, res) {
       var approvedParameters,
         params,
         coll,
-        view;
+        view,
+        filter;
 
       approvedParameters = $utils.checkParams(req.body, res, ['collection', 'name', 'where']);
       if (!approvedParameters) {
@@ -146,7 +215,7 @@ function generateRoutes(db) {
 
       // if view created successfully
       if (view) {
-        var filter = Function.apply(null, params.where);
+        filter = Function.apply(null, params.where);
 
         view.applyWhere(filter);
         res.json({
@@ -169,10 +238,17 @@ function generateRoutes(db) {
         } else {
           $utils.sendError(400, res, 'Trying to retrieve a non-existent view');
         }
-
       }
       return;
     }
+  }, {
+    url: '/getmemory',
+    method: 'get',
+    handler: function (req, res) {
+      $utils.setJSONHeader(res);
+      res.json(process.memoryUsage());
+    }
   }];
 }
+
 module.exports = generateRoutes;
