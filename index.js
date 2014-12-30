@@ -7,55 +7,21 @@ var express = require('express'),
   },
   config = require(__dirname + '/' + (process.argv[3] || 'config.js')) || defaultOptions,
   db = new loki(config.file || 'loki.json'),
-  routes = [{
-    method: 'post',
-    url: '/addcollection',
-    handler: function (req, res) {
-      if (!req.body.name) {
-        res.status(400).send({
-          message: 'missing collection name parameter'
-        });
-        return;
-      }
-      var options = {
-        indices: req.body.options.indices || [],
-        transactional: req.body.options.transactional || false,
-        asyncListeners: req.body.options.asyncListeners || false,
-        clone: req.body.options.clone || false,
-        disableChangesApi: req.body.options.disableChangesApi || false
-      };
-      var coll = db.addCollection(req.body.name, options);
-      res.status(coll ? 200 : 500).send({
-        message: 'Collection ' + req.body.name + ' created successfully',
-        config: {
-          't': coll.transactional,
-          'a': coll.asyncListeners,
-          'c': coll.cloneObjects
-        }
-      });
-      return;
-    }
-  }, {
-    method: 'post',
-    url: '/insert',
-    handler: function (req, res) {
-      if (!req.body.doc || !req.body.collection) {
-        res.status(400).send({
-          'message': 'missing document or collection parameter'
-        });
-        return;
-      }
-      var doc = db.getCollection(req.body.collection).insert(req.body.doc);
-      db.saveDatabase();
-      res.send({
-        'message': 'Document inserted',
-        'doc': doc
-      });
-      return;
-    }
-  }];
+  routes = require('./routes')(db);
+
+function tryDbLoad(db) {
+  try {
+    db.loadDatabase();
+  } catch (err) {
+    console.log('No existing file to load from.')
+  }
+}
+
+tryDbLoad(db);
+
 
 function setRoute(route) {
+  console.log('registering ' + route.url + '[' + route.method + ']');
   app[route.method](route.url, route.handler);
 }
 app.use(bodyParser.json());
