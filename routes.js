@@ -7,9 +7,6 @@ function generateRoutes(db) {
           message: message
         });
       },
-      setJSONHeader: function (res) {
-        res.set('Content-Type', 'application/json');
-      },
       parseParams: function (params, config) {
         var prop, parsed = {};
         for (prop in params) {
@@ -67,8 +64,6 @@ function generateRoutes(db) {
     method: 'post',
     url: '/addcollection',
     handler: function (req, res) {
-
-      $utils.setJSONHeader(res);
 
       if (!req.body.name) {
         $utils.sendError(400, res, 'missing collection name parameter');
@@ -245,7 +240,7 @@ function generateRoutes(db) {
     url: '/getmemory',
     method: 'get',
     handler: function (req, res) {
-      $utils.setJSONHeader(res);
+
       res.json(process.memoryUsage());
     }
   }];

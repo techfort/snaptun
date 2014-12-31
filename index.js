@@ -21,6 +21,10 @@ tryDbLoad(db);
 
 
 function setRoute(route) {
+  app.all(route.url, function (req, res, next) {
+    res.set('Content-Type', 'application/json');
+    next();
+  });
   console.log('registering ' + route.url + '[' + route.method + ']');
   app[route.method](route.url, route.handler);
 }
@@ -28,6 +32,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
   extended: true
 }));
+
 routes.forEach(setRoute);
 
 app.listen(config.port, function () {
