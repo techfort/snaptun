@@ -139,7 +139,7 @@ function generateRoutes(db) {
         id;
 
       coll = params.collection;
-      if (!$utils.checkCollection(coll)) {
+      if (!$utils.checkCollection(coll, res)) {
         return;
       }
 

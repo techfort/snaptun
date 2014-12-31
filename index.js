@@ -6,18 +6,24 @@ var express = require('express'),
     port: 20800
   },
   config = require(__dirname + '/' + (process.argv[3] || 'config.js')) || defaultOptions,
-  db = new loki(config.file || 'loki.json'),
+  file = config.file || 'loki.json',
+  db = new loki(file, {
+    autoload: true
+  }),
+  fs = require('fs'),
   routes = require('./routes')(db);
 
 function tryDbLoad(db) {
-  try {
-    db.loadDatabase();
-  } catch (err) {
-    console.log('No existing file to load from.')
+  if (fs.existsSync(file)) {
+    try {
+      db.loadDatabase();
+    } catch (err) {
+      console.log('No existing file to load from.')
+    }
   }
 }
 
-tryDbLoad(db);
+//tryDbLoad(db);
 
 
 function setRoute(route) {
