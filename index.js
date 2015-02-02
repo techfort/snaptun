@@ -32,6 +32,7 @@ var instance, server = {
   stop: function () {
     instance.close();
     console.log('Server stopped');
+    process.exit(0);
   }
 };
 
@@ -56,7 +57,7 @@ routes.forEach(setRoute);
 app.get('/stop', function (req, res) {
   res.send('Snaptun LokiJS server stopped');
   server.stop();
-  process.exit(0);
+
 });
 
 
