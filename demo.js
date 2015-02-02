@@ -1,3 +1,3 @@
 var server = require('./index.js');
 
-server.start();
+server.start(require('./config'));
