@@ -30,6 +30,7 @@ function generateRoutes(db) {
         }
         return parsed;
       },
+      defer: process.nextTick,
       checkParams: function (obj, res, paramsArray) {
         var passed = true;
         paramsArray.forEach(function (param) {
@@ -61,11 +62,21 @@ function generateRoutes(db) {
       }
     };
 
+  function getCollectionName(coll) {
+    return coll.name;
+  }
+
   return [{
     method: 'get',
     url: '/',
     handler: function (req, res) {
       res.send("Snaptun LokiJS server running");
+    }
+  }, {
+    method: 'get',
+    url: '/listcollections',
+    handler: function (req, res) {
+      res.json(db.listCollections());
     }
   }, {
     method: 'post',
@@ -96,6 +107,21 @@ function generateRoutes(db) {
             'disableChangesApi': coll.disableChangesApi
           }
         });
+      }
+    }
+  }, {
+    method: 'post',
+    url: '/changes/:collection/:flush?',
+    handler: function (req, res) {
+      if (coll = $utils.checkCollection(req.params.collection, res)) {
+        var flush = req.params.flush || false;
+        if (flush) {
+          var changes = db.generateChangesNotification([coll.name]);
+          $utils.defer(coll.flushChanges);
+          res.json(changes);
+        } else {
+          res.json(db.generateChangesNotification([coll.name]));
+        }
       }
     }
   }, {
@@ -244,10 +270,9 @@ function generateRoutes(db) {
       return;
     }
   }, {
-    url: '/getmemory',
+    url: '/memusage',
     method: 'get',
     handler: function (req, res) {
-
       res.json(process.memoryUsage());
     }
   }];

@@ -23,6 +23,19 @@ function tryDbLoad(db) {
   }
 }
 
+var instance, server = {
+  start: function () {
+    instance = app.listen(config.port, function () {
+      console.log('Listening to ' + config.port);
+    });
+  },
+  stop: function () {
+    instance.close();
+    console.log('Server stopped');
+  }
+};
+
+
 //tryDbLoad(db);
 
 
@@ -40,7 +53,12 @@ app.use(bodyParser.urlencoded({
 }));
 
 routes.forEach(setRoute);
-
-app.listen(config.port, function () {
-  console.log('Listening to ' + config.port);
+app.get('/stop', function (req, res) {
+  res.send('Snaptun LokiJS server stopped');
+  server.stop();
+  process.exit(0);
 });
+
+
+
+module.exports = server;
