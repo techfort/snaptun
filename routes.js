@@ -44,6 +44,7 @@ function generateRoutes(db) {
         var collection = db.getCollection(name);
         if (!collection) {
           $utils.sendError(400, res, 'Collection ' + name + ' not found');
+          return null;
         }
         return collection;
       },
@@ -61,6 +62,12 @@ function generateRoutes(db) {
     };
 
   return [{
+    method: 'get',
+    url: '/',
+    handler: function (req, res) {
+      res.send("Snaptun LokiJS server running");
+    }
+  }, {
     method: 'post',
     url: '/addcollection',
     handler: function (req, res) {
