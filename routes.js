@@ -65,12 +65,17 @@ function generateRoutes(db) {
   function getCollectionName(coll) {
     return coll.name;
   }
+  var jade = require('jade');
 
   return [{
     method: 'get',
     url: '/',
     handler: function (req, res) {
-      res.send("Snaptun LokiJS server running");
+      res.set('Content-Type', 'text/html');
+
+      res.render(__dirname + '/html/index.jade', {
+        pageTitle: "Snaptun - LokiJS Server"
+      });
     }
   }, {
     method: 'get',

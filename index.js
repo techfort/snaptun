@@ -11,7 +11,7 @@ var instance, server = {
       config = configObject || defaultOptions,
       file = config.file || 'loki.json',
       db = new loki(file, {
-        autoload: true
+        autoload: false
       }),
       fs = require('fs'),
       routes = require('./routes')(db);
@@ -39,6 +39,10 @@ var instance, server = {
       extended: true
     }));
 
+    app.engine('jade', require('jade').__express);
+    app.set('view engine', 'jade');
+    app.set('views', __dirname + '/html');
+    app.use(express.static(__dirname + '/html/js'));
     routes.forEach(setRoute);
     app.get('/stop', function (req, res) {
       res.send('Snaptun LokiJS server stopped');
