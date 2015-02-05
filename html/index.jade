@@ -2,11 +2,20 @@ doctype html
 html(lang="en")
   head
     title= pageTitle
+    link(href='main.css', rel='stylesheet', type='text/css')
+    link(href='http://fonts.googleapis.com/css?family=Roboto:100,300,400', rel='stylesheet', type='text/css')
     script(src="zepto.min.js")
   body
-    img(src="http://lokijs.org/images/kaunaz.gif")
-    h1 Snaptun LokiJS Server
-    p#testing hi!
+    div#top
+      h1
+        img.logo(src="http://lokijs.org/images/kaunaz.gif", width="30")
+        Snaptun LokiJS Server
+    
+    div#sidebar
+      ul#collections
+
+    div#main
+      span main...
     script(src="snaptun.js")
 
     

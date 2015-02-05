@@ -21,7 +21,7 @@ var instance, server = {
         try {
           db.loadDatabase();
         } catch (err) {
-          console.log('No existing file to load from.')
+          console.log('No existing file to load from.');
         }
       }
     }
@@ -43,6 +43,7 @@ var instance, server = {
     app.set('view engine', 'jade');
     app.set('views', __dirname + '/html');
     app.use(express.static(__dirname + '/html/js'));
+    app.use(express.static(__dirname + '/html/css'));
     routes.forEach(setRoute);
     app.get('/stop', function (req, res) {
       res.send('Snaptun LokiJS server stopped');
