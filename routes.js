@@ -87,10 +87,13 @@ function generateRoutes(db) {
     method: 'post',
     url: '/addcollection',
     handler: function (req, res) {
-
+      console.log(req.body)
       if (!req.body.name) {
         $utils.sendError(400, res, 'missing collection name parameter');
         return;
+      }
+      if (!req.body.options) {
+        req.body.options = {};
       }
       var options = {
         indices: req.body.options.indices || [],
@@ -106,6 +109,7 @@ function generateRoutes(db) {
         res.json({
           message: 'Collection ' + req.body.name + ' created successfully',
           config: {
+            'name': coll.name,
             'transactional': coll.transactional,
             'asyncListeners': coll.asyncListeners,
             'cloneObjects': coll.cloneObjects,

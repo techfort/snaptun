@@ -1,0 +1,55 @@
+body {
+  margin: 0px;
+  padding: 0px;
+  font-family: 'Roboto';
+  font-weight: 300;
+}
+
+div {
+  box-sizing: border-box;
+  margin: 0px;
+  padding: 8px;
+}
+h1, h2 { padding: 0px; margin: 0px; font-weight: 400; font-family: 'Roboto';}
+
+img.logo {
+  vertical-align: middle;
+}
+
+#menu {
+  width: 100%;
+  background: rgba(0, 90, 150, 0.7);
+  box-sizing: border-box;
+  color: white;
+  clear: both;
+}
+ul#nav {
+  list-style-type: none;
+  padding: 0px;
+  margin: 0px;
+}
+ul#nav li { display: inline; }
+ul#nav li a { display: block; margin: 0; outline: 0; color: white;}
+
+#top {
+  width: 100%;
+  background: rgba(0, 90, 150, 0.9);
+  box-sizing: border-box;
+  color: white;
+  clear: both;
+}
+
+#sidebar {
+  width: 25%;
+  float: left;
+  background: rgba(0, 90, 150, 0.3);
+  color: black;
+}
+#main {
+  width: 75%;
+  float: left;
+}
+
+.sn-input {
+  border: 1px solid background: rgba(0, 90, 150, 0.2);
+}
